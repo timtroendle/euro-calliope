@@ -1,11 +1,11 @@
-from pathlib import Path
-import sys
-import yaml
 import os
+import sys
+from pathlib import Path
 
-import pytest
 import calliope
 import pandas as pd
+import pytest
+import yaml
 
 
 def run_test(snakemake):
@@ -23,7 +23,7 @@ def run_test(snakemake):
             "--self-contained-html",
             "--verbose",
         ],
-        plugins=[_create_config_plugin(snakemake, override_dict, scenarios, subset_time)]
+        plugins=[_create_config_plugin(snakemake, override_dict, scenarios, subset_time)],
     )
     if exit_code == 0:
         Path(snakemake.output[0]).touch()
@@ -33,8 +33,7 @@ def run_test(snakemake):
 def _create_config_plugin(snakemake, override_dict, scenarios, subset_time):
     """Creates fixtures from Snakemake configuration."""
 
-    class SnakemakeConfigPlugin():
-
+    class SnakemakeConfigPlugin:
         @pytest.fixture(scope="session")
         def config(self):
             return snakemake.params.config
@@ -54,9 +53,7 @@ def _create_config_plugin(snakemake, override_dict, scenarios, subset_time):
         @pytest.fixture(scope="session")
         def model(self, scenario, override_dict):
             return calliope.Model(
-                snakemake.input.example_model,
-                scenario=",".join(scenarios[scenario]),
-                override_dict=override_dict
+                snakemake.input.example_model, scenario=",".join(scenarios[scenario]), override_dict=override_dict
             )
 
         @pytest.fixture(scope="session")
@@ -75,9 +72,7 @@ def _create_config_plugin(snakemake, override_dict, scenarios, subset_time):
         @pytest.fixture(scope="session")
         def optimised_example_model(self, override_dict):
             model = calliope.Model(
-                snakemake.input.example_model,
-                override_dict=override_dict,
-                scenario=",".join(scenarios["default"])
+                snakemake.input.example_model, override_dict=override_dict, scenario=",".join(scenarios["default"])
             )
             model.run()
             return model
@@ -102,8 +97,11 @@ def _create_config_plugin(snakemake, override_dict, scenarios, subset_time):
             return pd.read_csv(path, index_col=0, parse_dates=True)
 
         def _select_capacity_factor_time_series(self, technology):
-            selected = [path for path in snakemake.input.capacity_factor_timeseries
-                        if Path(path).name == f"capacityfactors-{technology}.csv"]
+            selected = [
+                path
+                for path in snakemake.input.capacity_factor_timeseries
+                if Path(path).name == f"capacityfactors-{technology}.csv"
+            ]
             assert len(selected) == 1
             return selected[0]
 

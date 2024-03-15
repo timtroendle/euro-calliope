@@ -1,4 +1,5 @@
 """Module to merge and preprocess GADM administrative borders."""
+
 from itertools import chain
 
 import fiona
@@ -11,24 +12,21 @@ LAYER_NAME = "gadm{layer_id}"
 
 
 def retrieve_administrative_borders(path_to_countries, max_layer_depths, path_to_output, crs, study_area, schema):
-    study_area = prep(study_area) # improves performance
+    study_area = prep(study_area)  # improves performance
     with fiona.open(path_to_countries[0], "r", layer=0) as first_country:
         src_crs = first_country.crs
         src_driver = first_country.driver
     for layer_id in range(max_layer_depths + 1):
         print(f"Merging layer {layer_id}...")
-        with fiona.open(path_to_output,
-                        "w",
-                        crs=crs,
-                        schema=schema,
-                        driver=src_driver,
-                        layer=LAYER_NAME.format(layer_id=layer_id)) as merged_file:
-            merged_file.writerecords(
-                [_reproject(feature, src_crs, crs) for feature in chain(
-                    *[_country_features(path_to_country, layer_id, study_area)
-                      for path_to_country in path_to_countries])
-                 ]
-            )
+        with fiona.open(
+            path_to_output, "w", crs=crs, schema=schema, driver=src_driver, layer=LAYER_NAME.format(layer_id=layer_id)
+        ) as merged_file:
+            merged_file.writerecords([
+                _reproject(feature, src_crs, crs)
+                for feature in chain(*[
+                    _country_features(path_to_country, layer_id, study_area) for path_to_country in path_to_countries
+                ])
+            ])
     _test_id_uniqueness(path_to_output)
 
 
@@ -44,8 +42,7 @@ def _country_features(path_to_file, layer_id, study_area):
             new_feature["properties"]["id"] = feature["properties"][f"GID_{layer_id}"]
             new_feature["properties"]["name"] = feature["properties"][f"NAME_{layer_id}"]
             new_feature["properties"]["type"] = (
-                feature["properties"][f"ENGTYPE_{layer_id}"] if layer_id > 0
-                else "country"
+                feature["properties"][f"ENGTYPE_{layer_id}"] if layer_id > 0 else "country"
             )
             new_feature["properties"]["proper"] = True
             new_feature["geometry"] = _all_parts_in_study_area(feature, study_area)
@@ -58,17 +55,17 @@ def _in_study_area(study_area):
         if study_area.contains(unit) or study_area.intersects(unit):
             return True
         else:
-            print("Removing {} as it is outside of study area.".format(_feature_name(feature)))
+            print(f"Removing {_feature_name(feature)} as it is outside of study area.")
             return False
+
     return _in_study_area
 
 
 def _all_parts_in_study_area(feature, study_area):
     unit = _to_multi_polygon(feature["geometry"])
     if not study_area.contains(unit):
-        print("Removing parts of {} outside of study area.".format(_feature_name(feature)))
-        new_unit = shapely.geometry.MultiPolygon([polygon for polygon in unit.geoms
-                                                  if study_area.contains(polygon)])
+        print(f"Removing parts of {_feature_name(feature)} outside of study area.")
+        new_unit = shapely.geometry.MultiPolygon([polygon for polygon in unit.geoms if study_area.contains(polygon)])
         unit = new_unit
     return shapely.geometry.mapping(unit)
 
@@ -76,22 +73,17 @@ def _all_parts_in_study_area(feature, study_area):
 def _feature_name(feature):
     # brute force way of finding name
     # the problem is that the name of the feature depends on the layer
-    for property_name in ["NAME_7", "NAME_6", "NAME_5", "NAME_4", "NAME_3", "NAME_2", "NAME_1",
-                          "NAME_0"]:
+    for property_name in ["NAME_7", "NAME_6", "NAME_5", "NAME_4", "NAME_3", "NAME_2", "NAME_1", "NAME_0"]:
         try:
             name = feature["properties"][property_name]
             break
         except KeyError:
-            pass # nothing to do here
+            pass  # nothing to do here
     return name
 
 
 def _reproject(feature, src_crs, dst_crs):
-    feature["geometry"] = fiona.transform.transform_geom(
-        src_crs=src_crs,
-        dst_crs=dst_crs,
-        geom=feature["geometry"]
-    )
+    feature["geometry"] = fiona.transform.transform_geom(src_crs=src_crs, dst_crs=dst_crs, geom=feature["geometry"])
     return feature
 
 
@@ -120,6 +112,6 @@ if __name__ == "__main__":
             minx=snakemake.params.x_min,
             maxx=snakemake.params.x_max,
             miny=snakemake.params.y_min,
-            maxy=snakemake.params.y_max
-        )
+            maxy=snakemake.params.y_max,
+        ),
     )

@@ -1,4 +1,5 @@
 """Utility functions."""
+
 import pycountry
 
 
@@ -6,7 +7,7 @@ def eu_country_code_to_iso3(eu_country_code):
     """Converts EU country code to ISO 3166 alpha 3.
     The European Union uses its own country codes, which often but not always match ISO 3166.
     """
-    assert len(eu_country_code) == 2, "EU country codes are of length 2, yours is '{}'.".format(eu_country_code)
+    assert len(eu_country_code) == 2, f"EU country codes are of length 2, yours is '{eu_country_code}'."
 
     return convert_country_code(eu_country_code, output="alpha3")
 
@@ -25,9 +26,7 @@ def convert_country_code(input_country, output="alpha3"):
         input_country = "gr"
     elif input_country.lower() == "uk":
         input_country = "gb"
-    elif (
-        input_country.lower() == "bh"
-    ):  # this is a weird country code used in the biofuels dataset
+    elif input_country.lower() == "bh":  # this is a weird country code used in the biofuels dataset
         input_country = "ba"
 
     if output == "alpha2":

@@ -2,18 +2,18 @@ import io
 from contextlib import redirect_stdout
 from pathlib import Path
 
-import snakemake
 import mkdocs
+import pydot
+import snakemake
 from mkdocs.plugins import BasePlugin
 from mkdocs.structure.files import File
-import pydot
 
 
 class DAGPlugin(BasePlugin):
     config_scheme = (
-        ('path_to_snakefile', mkdocs.config.config_options.Type(str)),
-        ('path_to_src_dir', mkdocs.config.config_options.Type(str)),
-        ('path_to_png_relative_to_site', mkdocs.config.config_options.Type(str))
+        ("path_to_snakefile", mkdocs.config.config_options.Type(str)),
+        ("path_to_src_dir", mkdocs.config.config_options.Type(str)),
+        ("path_to_png_relative_to_site", mkdocs.config.config_options.Type(str)),
     )
 
     def on_files(self, files, config, **kwargs):
@@ -31,7 +31,7 @@ class DAGPlugin(BasePlugin):
             path=self.config["path_to_png_relative_to_site"],
             src_dir=self.config["path_to_src_dir"],
             dest_dir=config["site_dir"],
-            use_directory_urls=config["use_directory_urls"]
+            use_directory_urls=config["use_directory_urls"],
         )
         files.append(dag_file)
         return files

@@ -6,10 +6,7 @@ import numpy as np
 import xarray as xr
 
 
-def summarise_potentials(
-    path_to_model: str, path_to_output_csv: str, path_to_output_netcdf: str, sf: dict
-) -> None:
-
+def summarise_potentials(path_to_model: str, path_to_output_csv: str, path_to_output_netcdf: str, sf: dict) -> None:
     """
     Generates .nc and .csv files (longform data) that summarise the potentials (= per-tech constriants) for each
     technology and each location.
@@ -31,11 +28,12 @@ def summarise_potentials(
             Dictionary of scaling factors for power, area, monetary as defined in config file
     """
 
-    considered_potentials = {"energy_cap_max": {"sf": sf["power"], "unit": "MW"},
-                             "energy_cap_equals": {"sf": sf["power"], "unit": "MW"},
-                             "storage_cap_max": {"sf": sf["power"], "unit": "MWh"},
-                             "storage_cap_equals": {"sf": sf["power"], "unit": "MWh"}
-                             }
+    considered_potentials = {
+        "energy_cap_max": {"sf": sf["power"], "unit": "MW"},
+        "energy_cap_equals": {"sf": sf["power"], "unit": "MW"},
+        "storage_cap_max": {"sf": sf["power"], "unit": "MWh"},
+        "storage_cap_equals": {"sf": sf["power"], "unit": "MWh"},
+    }
     # Can be extended with other per-tech constraint variables of the model (pay attention to units/scaling factors).
 
     model = calliope.Model(path_to_model)
@@ -46,16 +44,19 @@ def summarise_potentials(
 
     summary = np.empty((len(list_of_techs), len(list_of_potentials), len(list_of_locs)))
     summary[:] = np.nan
-    units = np.empty((len(list_of_potentials)), dtype='<U32')
+    units = np.empty((len(list_of_potentials)), dtype="<U32")
     units[:] = np.nan
 
-    summary = xr.DataArray(summary,
-                           dims=("techs", "potentials", "locs"),
-                           coords={"techs": list_of_techs,
-                                   "potentials": list_of_potentials,
-                                   "locs": list_of_locs,
-                                   "unit": (["potentials"], units)}
-                           )
+    summary = xr.DataArray(
+        summary,
+        dims=("techs", "potentials", "locs"),
+        coords={
+            "techs": list_of_techs,
+            "potentials": list_of_potentials,
+            "locs": list_of_locs,
+            "unit": (["potentials"], units),
+        },
+    )
 
     for potential in list_of_potentials:
         aux = model.get_formatted_array(potential)
@@ -63,8 +64,9 @@ def summarise_potentials(
         for tech in list_of_techs:
             for loc in list_of_locs:
                 try:
-                    summary.loc[dict(techs=tech, locs=loc, potentials=potential)] = aux.loc[
-                        dict(techs=tech, locs=loc)] / considered_potentials[potential]["sf"]
+                    summary.loc[dict(techs=tech, locs=loc, potentials=potential)] = (
+                        aux.loc[dict(techs=tech, locs=loc)] / considered_potentials[potential]["sf"]
+                    )
                 except KeyError:
                     # If a technology "tech" is not installed in location "loc", or the potential "potential"
                     # is not defined for "tech" at "loc", the value remains "NaN".
@@ -79,5 +81,5 @@ if __name__ == "__main__":
         path_to_model=snakemake.input.path_to_model,
         path_to_output_csv=snakemake.output.csv,
         path_to_output_netcdf=snakemake.output.netcdf,
-        sf=snakemake.params.scaling_factors
+        sf=snakemake.params.scaling_factors,
     )

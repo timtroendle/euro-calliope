@@ -25,11 +25,6 @@ def _buffer_if_necessary(shape):
 if __name__ == "__main__":
     preprocess_basins(
         path_to_basins=snakemake.input.basins,
-        bbox=(
-            snakemake.params.x_min,
-            snakemake.params.y_min,
-            snakemake.params.x_max,
-            snakemake.params.y_max
-        ),
-        path_to_output=snakemake.output[0]
+        bbox=(snakemake.params.x_min, snakemake.params.y_min, snakemake.params.x_max, snakemake.params.y_max),
+        path_to_output=snakemake.output[0],
     )

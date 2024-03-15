@@ -1,4 +1,4 @@
-line-length = 88
+line-length = 119
 preview = true # required to activate many pycodestyle errors and warnings as of 2024-03-13
 builtins = ["snakemake"]
 

@@ -1,5 +1,5 @@
-import pandas as pd
 import geopandas as gpd
+import pandas as pd
 
 
 def remove_geo_information(path_to_units, path_to_units_without_geo_information):
@@ -11,6 +11,5 @@ def remove_geo_information(path_to_units, path_to_units_without_geo_information)
 
 if __name__ == "__main__":
     remove_geo_information(
-        path_to_units=snakemake.input.units,
-        path_to_units_without_geo_information=snakemake.output[0]
+        path_to_units=snakemake.input.units, path_to_units_without_geo_information=snakemake.output[0]
     )

@@ -1,15 +1,14 @@
 """Preprocessing of raw NUTS data to bring it into normalised form."""
+
 import zipfile
 
 import fiona
 import fiona.transform
-import shapely.geometry
 import geopandas as gpd
 import pandas as pd
 import pycountry
-
+import shapely.geometry
 from eurocalliopelib import utils
-
 
 OUTPUT_DRIVER = "GPKG"
 LAYER_NAME = "nuts{layer_id}"
@@ -20,7 +19,7 @@ def merge(path_to_shapes, path_to_attributes, path_to_output):
     shapes = gpd.read_file(path_to_shapes)
     shapes.geometry = shapes.geometry.map(_to_multi_polygon)
     attributes = gpd.read_file(path_to_attributes)
-    attributes = pd.DataFrame(attributes) # to be able to remove geo information
+    attributes = pd.DataFrame(attributes)  # to be able to remove geo information
     del attributes["geometry"]
     shapes.merge(attributes, on="NUTS_ID", how="left").to_file(path_to_output, driver=OUTPUT_DRIVER)
 
@@ -34,18 +33,15 @@ def normalise(path_to_nuts, path_to_output, crs, study_area, all_countries, sche
     """
     with fiona.open(path_to_nuts, "r") as nuts_file:
         for layer_id in range(4):
-            print("Building layer {}...".format(layer_id))
+            print(f"Building layer {layer_id}...")
             _write_layer(nuts_file, crs, study_area, all_countries, path_to_output, layer_id, schema)
     _test_id_uniqueness(path_to_output)
 
 
 def _write_layer(nuts_file, crs, study_area, all_countries, path_to_output, layer_id, schema):
-    with fiona.open(path_to_output,
-                    "w",
-                    crs=crs,
-                    schema=schema,
-                    driver=OUTPUT_DRIVER,
-                    layer=LAYER_NAME.format(layer_id=layer_id)) as result_file:
+    with fiona.open(
+        path_to_output, "w", crs=crs, schema=schema, driver=OUTPUT_DRIVER, layer=LAYER_NAME.format(layer_id=layer_id)
+    ) as result_file:
         result_file.writerecords(_layer_features(nuts_file, crs, study_area, all_countries, layer_id))
 
 
@@ -76,28 +72,21 @@ def _all_parts_in_study_area_and_crs(feature, src_crs, dst_crs, study_area):
     unit = _to_multi_polygon(feature["geometry"])
     if not study_area.contains(unit):
         print("Removing parts of {} outside of study area.".format(feature["properties"]["NUTS_ID"]))
-        new_unit = shapely.geometry.MultiPolygon([polygon for polygon in unit.geoms
-                                                  if study_area.contains(polygon)])
+        new_unit = shapely.geometry.MultiPolygon([polygon for polygon in unit.geoms if study_area.contains(polygon)])
         unit = new_unit
     geometry = shapely.geometry.mapping(unit)
-    return fiona.transform.transform_geom(
-        src_crs=src_crs,
-        dst_crs=dst_crs,
-        geom=geometry
-    )
+    return fiona.transform.transform_geom(src_crs=src_crs, dst_crs=dst_crs, geom=geometry)
 
 
 def _in_layer_and_in_study_area(layer_id, study_area, all_countries):
     def _in_layer_and_in_study_area(feature):
         return _in_layer(layer_id, feature) and _in_study_area(study_area, all_countries, feature)
+
     return _in_layer_and_in_study_area
 
 
 def _in_layer(layer_id, feature):
-    if feature["properties"]["STAT_LEVL_"] == layer_id:
-        return True
-    else:
-        return False
+    return feature["properties"]["STAT_LEVL_"] == layer_id
 
 
 def _in_study_area(study_area, all_countries, feature):
@@ -126,13 +115,13 @@ def _test_id_uniqueness(path_to_file):
 
 
 if __name__ == "__main__":
-    with zipfile.ZipFile(snakemake.input.zipped, 'r') as zipped:
+    with zipfile.ZipFile(snakemake.input.zipped, "r") as zipped:
         zipped.extractall("./build")
     TMP_FILE = "./build/raw-nuts.gpkg"
     merge(
         path_to_shapes="./build/NUTS_2013_01M_SH/data/NUTS_RG_01M_2013.shp",
         path_to_attributes="./build/NUTS_2013_01M_SH/data/NUTS_AT_2013.dbf",
-        path_to_output=TMP_FILE
+        path_to_output=TMP_FILE,
     )
     normalise(
         path_to_nuts=TMP_FILE,
@@ -144,6 +133,6 @@ if __name__ == "__main__":
             minx=snakemake.params.x_min,
             maxx=snakemake.params.x_max,
             miny=snakemake.params.y_min,
-            maxy=snakemake.params.y_max
-        )
+            maxy=snakemake.params.y_max,
+        ),
     )
